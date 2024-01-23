@@ -18,8 +18,7 @@ def get_user_empath_score(reddit_user_list):
         for comment in comments:
             try:
                 result_dict = lexicon.analyze(comment,
-                                              categories=["violence", "anger", "hate", "politeness", "nervousness",
-                                                           "aggression"])
+                                              categories=["anger", "hate","nervousness","positive_emotion"])
                 scores.append(list(result_dict.values()))
             except Exception as e:
                 print(e)
@@ -27,13 +26,39 @@ def get_user_empath_score(reddit_user_list):
         empath_scores.append(np.nanmean(scores, axis=0))
 
     empath_scores = np.asarray(empath_scores)
-    reddit_user_list['violence'] = empath_scores[:, 0]
-    reddit_user_list['anger'] = empath_scores[:, 1]
-    reddit_user_list['hate'] = empath_scores[:, 2]
-    reddit_user_list['politeness'] = empath_scores[:, 3]
-    reddit_user_list['nervousness'] = empath_scores[:, 4]
-    reddit_user_list['aggression'] = empath_scores[:, 5]
+    reddit_user_list['anger'] = empath_scores[:, 0]
+    reddit_user_list['hate'] = empath_scores[:, 1]
+    reddit_user_list['nervousness'] = empath_scores[:, 2]
+    reddit_user_list['positive_emotion'] = empath_scores[:, 3]
     return reddit_user_list
+def compute_morality_scores(reddit_user_list):
+
+    DICT_TYPE = 'emfd'
+    PROB_MAP = 'all'
+    SCORE_METHOD = 'bow'
+    OUT_METRICS = 'sentiment'
+    OUT_CSV_PATH = 'all-vv.csv'
+    template_input = pd.read_csv('template_input.csv', header=None)
+    template_input.head()
+    num_docs = len(template_input)
+
+    morality_scores = []
+    for index in range(len(reddit_user_list)):
+        user = reddit_user_list.loc[index, "Author"]
+        comments = retrieve_data_from_db.select_user_comments(user)
+        comments= pd.DataFrame(data=comments)
+        df = score_docs(comments, DICT_TYPE, PROB_MAP, SCORE_METHOD, OUT_METRICS, len(comments))
+        morality_scores.append(list(np.mean(df.values, axis=0)))
+
+    empath_scores = np.asarray(morality_scores)
+    reddit_user_list['Care / Harm(R)'] = empath_scores[:, 0]
+    reddit_user_list['Fairness / Cheating(R)'] = empath_scores[:, 1]
+    reddit_user_list['Loyalty / Betrayal(R)'] = empath_scores[:, 2]
+    reddit_user_list['Authority / Subversion(R)'] = empath_scores[:, 3]
+    reddit_user_list['Sanctity / Degradation(R)'] = empath_scores[:, 4]
+
+    return reddit_user_list
+
 
 def get_toxicity_score(reddit_user_list):
     toxicity = []
@@ -110,6 +135,8 @@ def get_user_MBFC_scores(reddit_user_list):
     reddit_user_list['avg_consp'] = conspiracy_all
     reddit_user_list['avg_bias'] = bias_all
     return reddit_user_list
+
+
 
 
 def get_controversy_engagement(reddit_user_list):

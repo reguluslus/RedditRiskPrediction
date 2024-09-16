@@ -16,7 +16,7 @@ def remove_quotes_(text):
 
 def toxicity_score(text):
     clean_text = remove_quotes_(text)
-    API_KEY = 'AIzaSyDb_4h37CwVG0JtRddk7peDQ13fHHxmZwo'
+    API_KEY = ''
     client = discovery.build(
         "commentanalyzer",
         "v1alpha1",
